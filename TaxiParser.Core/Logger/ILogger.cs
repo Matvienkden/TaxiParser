@@ -8,6 +8,14 @@ namespace TaxiParser.Core.Logger
 {
     public interface ILogger
     {
-        void Log(string message);
+        void Log(string message, LogLevel LogLevel = LogLevel.INFO);
+    }
+
+    public enum LogLevel
+    {
+        INFO,
+        WARNING,
+        ERROR,
+        SUCCSESS
     }
 }

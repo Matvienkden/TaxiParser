@@ -19,10 +19,20 @@ namespace TaxiParser.Core
         private ILogger logger { get; }
         private Uri basicUrl { get; }
         private int totalPage { get; set; }
+        private string filePath { get; }
+        private SaveTo saveTo { get; }
 
-        public ParserService(ILogger logger)
+        public ParserService(ILogger logger, SaveTo saveTo)
         {
             this.logger = logger;
+            this.saveTo = saveTo;
+
+            filePath = ConfigurationManager.AppSettings.Get("FilePath");
+
+            if (string.IsNullOrEmpty(filePath))
+            {
+                throw new ConfigurationErrorsException("В файле конфигурации не задан параметр FilePath (Путь к фалу для сохранения результата)");
+            }
 
             var targetUriString = ConfigurationManager.AppSettings.Get("TargetUrl");
 
@@ -48,9 +58,12 @@ namespace TaxiParser.Core
                 try
                 {
                     logger.Log("Запуск");
-                    logger.Log("Определим кол-во страниц");
 
-                    var web = new HtmlAgilityPack.HtmlWeb();                  
+                    InitStorage();
+
+                    logger.Log("\nОпределим кол-во страниц");
+
+                    var web = new HtmlAgilityPack.HtmlWeb();
                     var doc = web.Load(basicUrl);
                     var totalRecordStr = new Regex(@"Документы\s\d+\s-\s\d+\sиз\s(\d+)")
                         .Match(doc.Text).Groups[1]
@@ -60,29 +73,36 @@ namespace TaxiParser.Core
                     totalPage = (int)Math.Ceiling((double)totalRecord / 10);
 
                     logger.Log($"Всего записей: {totalRecord}");
-                    logger.Log($"Всего страниц: {totalPage}");
+                    logger.Log($"Всего страниц: {totalPage}", LogLevel.SUCCSESS);
 
                     logger.Log("\r\nЗапускаем парсинг страниц\r\n");
 
                     for (int i = 1; i <= totalPage; i++)
                     {
-                        results.AddRange(GetAndParsingOnePage(i));
-                        logger.Log($"Всего записей: {results.Count}");
+                        try
+                        {
+                            results.AddRange(GetAndParsingOnePage(i));
+                            logger.Log($"Всего записей: {results.Count}");
+                        }
+                        catch (Exception e)
+                        {
+                            logger.Log(e.Message, LogLevel.ERROR);
+                        }
                     }
 
-                    logger.Log("\r\nВсе страницы успешно обработаны");
+                    logger.Log("\r\nВсе страницы успешно обработаны", LogLevel.SUCCSESS);
 
-                    logger.Log("Сохраняем в файл");
-                    Save(results);
-                    logger.Log("Данные успешно сохранены");
+                    //logger.Log("Сохраняем в файл");
+                    //Save(results);
+                    //logger.Log("Данные успешно сохранены", LogLevel.SUCCSESS);
                 }
                 catch (Exception e)
                 {
-                    logger.Log(e.Message);
+                    logger.Log(e.Message, LogLevel.ERROR);
                 }
 
                 logger.Log("\r\nСледующий запуск через 5 минут");
-                Thread.Sleep(5*60*1000);
+                Thread.Sleep(5 * 60 * 1000);
             }
         }
 
@@ -107,7 +127,7 @@ namespace TaxiParser.Core
                 }
             }
 
-            logger.Log($"Страница {pageNumber} получена, начинам парсинг");
+            logger.Log($"Страница {pageNumber} получена, начинам парсинг", LogLevel.SUCCSESS);
 
             var doc = new HtmlAgilityPack.HtmlDocument();
             doc.Load(responseStream, new UTF8Encoding());
@@ -123,7 +143,7 @@ namespace TaxiParser.Core
                     return new License
                     {
                         LicenseNumber = tds[0],
-                        CarNumber = tds[1],
+                        CarNumber = tds[1].ReplaceRegex(@"\s+", ""),
                         LicenseOwner = isCompany ? tds[2].Replace("&quot;", "\"") : fioArr.FioFormat(),
                         IsCompany = isCompany,
                         CarVendor = tds[3],
@@ -134,8 +154,25 @@ namespace TaxiParser.Core
                     };
                 });
 
+            foreach (var item in tempResults)
+            {
+                Save(item);
+            }
+
             logger.Log($"Успешно, получено записей со страницы: {tempResults.Count()}");
             return tempResults;
+        }
+
+        private void Save(License license)
+        {
+            using (var file = File.AppendText("licenses.json"))
+            {
+                var option = new JsonSerializerSettings();
+                option.Formatting = Formatting.Indented;
+                //option.
+                var js = JsonSerializer.Create(option);
+                js.Serialize(file, license);
+            }
         }
 
         private void Save(IEnumerable<License> licenses)
@@ -148,14 +185,30 @@ namespace TaxiParser.Core
                 js.Serialize(file, licenses);
             }
         }
+
+        void InitStorage()
+        {
+            switch (saveTo)
+            {
+                case SaveTo.File:
+                    if (File.Exists(filePath))
+                    {
+                        logger.Log("\nУдалим существующий файл с результатами");
+                        File.Delete(filePath);
+                        logger.Log("Успешно удалён", LogLevel.SUCCSESS);
+                    }
+                    break;
+                case SaveTo.Database:
+                    throw new NotImplementedException();
+                default: throw new ArgumentException(nameof(saveTo));
+            }
+        }
     }
 
-    //if (basicUri.)
-    //{
-
-    //}
-
-    //var request = HttpWebRequest.Create()
-
+    public enum SaveTo
+    {
+        File,
+        Database
+    }
 }
 

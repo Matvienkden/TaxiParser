@@ -11,9 +11,21 @@ namespace TaxiParser.App
     {
         static void Main(string[] args)
         {
-            var parser = new ParserService(new ConsoleLogger());
-            parser.Start();
-            Console.ReadLine();
+            try
+            {
+                var parser = new ParserService(new ConsoleLogger(), SaveTo.File);
+                parser.Start();
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.Source);
+                Console.WriteLine(e.StackTrace);
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+
+            
         }
     }
 }
