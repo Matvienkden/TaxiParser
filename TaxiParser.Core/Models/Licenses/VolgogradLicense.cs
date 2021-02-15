@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TaxiParser.Core.Models
+namespace TaxiParser.Core.Models.Licenses
 {
-    public class License
+    public class VolgogradLicense: ILicense
     {
         public string LicenseNumber { get; set; }
         public string CarNumber { get; set; }
@@ -16,6 +16,6 @@ namespace TaxiParser.Core.Models
         public string CarModel { get; set; }
         public DateTime LicenseStart { get; set; }
         public DateTime? LicenseEnd { get; set; }
-        public string State { get; set; }
+        public string LicenseState { get; set; }
     }
 }

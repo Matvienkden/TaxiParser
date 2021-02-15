@@ -5,13 +5,19 @@ namespace TaxiParser.Core.Extensions
 {
     public static class StringExtensions
     {
-        public static string FioFormat(this string[] fio)
+        public static string FioFormat(this string[] fio, bool needDecline = false)
         {
-            //  var a = new CyrName().DeclineSurnameDative(fio[0], (int)CasesEnum.Nominative, false);
-
             fio = fio.Select(w => w.Substring(0, 1).ToUpper() + w.Substring(1, w.Length - 1).ToLower()).ToArray();
-            var f = fio.Select(w => w.DativusToNominativus());
-            return string.Join(" ", f);
+            if (needDecline)
+            {
+                return string.Join(" ", fio.Select(w => w.DativusToNominativus()));
+            }
+            return string.Join(" ", fio);
+        }
+
+        public static string FioFormat(this string fio, bool needDecline = false)
+        {
+            return FioFormat(fio.DeleteExtraSpaces().Split(' '));
         }
 
         public static string ModelFormat(this string model, string vendor)
@@ -37,44 +43,57 @@ namespace TaxiParser.Core.Extensions
                 case "Павлу": return "Павел";
                 case "Любови": return "Любовь";
                 case var e when e.EndsWith("кой"):
-                    return e.ReplaceRegex("ой$", "ая");
+                    return e.RegexReplace("ой$", "ая");
                 case var e when e.EndsWith("жей"):
-                    return e.ReplaceRegex("ей$", "ая");
+                    return e.RegexReplace("ей$", "ая");
                 case var e when e.EndsWith("ой"):
-                    return e.ReplaceRegex("ой$", "а");
+                    return e.RegexReplace("ой$", "а");
                 case var e when e.EndsWith("кому"):
-                    return e.ReplaceRegex("ому", "ий");
+                    return e.RegexReplace("ому", "ий");
                 case var e when e.EndsWith("ому"):
-                    return e.ReplaceRegex("ому", "ый");
+                    return e.RegexReplace("ому", "ый");
                 case var e when e.EndsWith("у"):
                     return e.Remove(e.Length - 1);
                 case var e when e.RegexIsMatch("[ауоыиэяюёе]ю$"):
-                    return e.ReplaceRegex("ю$", "й");
+                    return e.RegexReplace("ю$", "й");
                 case var e when e.EndsWith("ю"):
-                    return e.ReplaceRegex("ю$", "ь");
+                    return e.RegexReplace("ю$", "ь");
                 case var e when e.EndsWith("ье"):
-                    return e.ReplaceRegex("ье$", "я");
+                    return e.RegexReplace("ье$", "я");
                 case var e when e.EndsWith("е"):
-                    return e.ReplaceRegex("е$", "а");
+                    return e.RegexReplace("е$", "а");
                 case var e when e.EndsWith("ии"):
-                    return e.ReplaceRegex("ии$", "ия");
+                    return e.RegexReplace("ии$", "ия");
                 default: return str;
             }
         }
 
-        public static string ReplaceRegex(this string str, string a, string b)
+        public static string RegexReplace(this string str, string a, string b, RegexOptions options = RegexOptions.None)
         {
-            return Regex.Replace(str, a, b);
+            return Regex.Replace(str, a, b, options);
         }
 
         public static string DeleteExtraSpaces(this string str)
         {
-            return str.ReplaceRegex(@"\s+", " ").Trim();
+            return str.RegexReplace(@"\s+", " ").Trim();
         }
 
         public static bool RegexIsMatch(this string str, string pattern)
         {
             return new Regex(pattern).IsMatch(str);
+        }
+
+        public static string GetStrByRegexGroup(this string str, string pattern, int groupIndex = 1)
+        {
+            return new Regex(pattern)
+                .Match(str).Groups[groupIndex]
+                .ToString();
+        }
+
+        public static GroupCollection GetRegexGroups(this string str, string pattern)
+        {
+            return new Regex(pattern)
+                .Match(str).Groups;
         }
     }
 }

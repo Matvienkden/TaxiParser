@@ -63,6 +63,7 @@
     </Reference>
     <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Transactions" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -72,14 +73,23 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Enums\SaveTo.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
+    <Compile Include="Extensions\WebResponseExtensions.cs" />
     <Compile Include="Logger\ILogger.cs" />
-    <Compile Include="Models\License.cs" />
-    <Compile Include="ParserService.cs" />
+    <Compile Include="Models\Licenses\ILicense.cs" />
+    <Compile Include="Models\Licenses\VolgogradLicense.cs" />
+    <Compile Include="Models\Licenses\VoronezhLicense.cs" />
+    <Compile Include="Parsers\ParserBase.cs" />
+    <Compile Include="Parsers\VolgogradParser.cs" />
+    <Compile Include="Parsers\VoronezhParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Services\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

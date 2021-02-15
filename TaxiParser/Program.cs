@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TaxiParser.Core;
+using TaxiParser.Core.Enums;
+using TaxiParser.Core.Parsers;
 
 namespace TaxiParser.App
 {
@@ -13,8 +11,25 @@ namespace TaxiParser.App
         {
             try
             {
-                var parser = new ParserService(new ConsoleLogger(), SaveTo.File);
-                parser.Start();
+
+                if (args.Contains("volgograd"))
+                {
+                    Console.WriteLine("Парсинг такси для Волгоградской области");
+                    var parser = new VolgogradParser(new ConsoleLogger(), SaveTo.File);
+                    parser.Start();
+                }
+                else if (args.Contains("voronezh"))
+                {
+                    Console.WriteLine("Парсинг такси для Воронежской области");
+                    var parser = new VoronezhParser(new ConsoleLogger(), SaveTo.File);
+                    parser.Start();
+                }
+                else
+                {
+                    Console.WriteLine("volgograd - парсинг такси для Волгоградской области");
+                    Console.WriteLine("voronezh - парсинг такси для Воронежской области");
+                }
+
             }
             catch (Exception e)
             {
@@ -25,7 +40,7 @@ namespace TaxiParser.App
                 Console.ForegroundColor = ConsoleColor.White;
             }
 
-            
+            Console.ReadLine();
         }
     }
 }
